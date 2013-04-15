@@ -375,6 +375,9 @@ typedef struct {
     unsigned char lbmod;
     unsigned char lbparm;
     char *dhparamFile;
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL && !defined(OPENSSL_NO_ECDH)
+    char *ecdhCurve;
+#endif
 } SSLOpts;
 
 DH *dhParam = NULL;
@@ -7515,6 +7518,27 @@ StoneSSL *mkStoneSSL(SSLOpts *opts, int isserver) {
 	message(LOG_NOTICE, "Forward security (DH) enabled");
     }
  skip_dh:
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL && !defined(OPENSSL_NO_ECDH)
+    if (opts->ecdhCurve) {
+	int nid = 0;
+	EC_KEY *ecdh = NULL;
+	nid = OBJ_sn2nid(opts->ecdhCurve);
+	if (nid == NID_undef) {
+	    message(LOG_ERR, "Unknown curve, ECDH disabled");
+	    goto skip_ecdh;
+	}
+	ecdh = EC_KEY_new_by_curve_name(nid);
+	if (!ecdh) {
+	    message(LOG_ERR, "Failed to create new curve, ECDH disabled");
+	    goto skip_ecdh;
+	}
+	SSL_CTX_set_tmp_ecdh(ss->ctx, ecdh);
+	SSL_CTX_set_options(ss->ctx, SSL_OP_SINGLE_ECDH_USE);
+	EC_KEY_free(ecdh);
+	message(LOG_NOTICE, "Forward security (ECDH) enabled");
+    }
+ skip_ecdh:
+#endif
     return ss;
  error:
     if (opts->verbose)
@@ -8928,6 +8952,9 @@ void sslopts_default(SSLOpts *opts, int isserver) {
     opts->lbparm = 0xFF;
     opts->shutdown_mode = 0;
     opts->dhparamFile = NULL;
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL && !defined(OPENSSL_NO_ECDH)
+    opts->ecdhCurve = NULL;
+#endif
 }
 
 int sslopts(int argc, int argi, char *argv[], SSLOpts *opts, int isserver) {
@@ -9077,6 +9104,10 @@ int sslopts(int argc, int argi, char *argv[], SSLOpts *opts, int isserver) {
 	opts->lbmod = atoi(argv[argi]+4);
     } else if (!strncmp(argv[argi], "dh_param=", 9)) {
 	opts->dhparamFile = strdup(argv[argi]+9);
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL && !defined(OPENSSL_NO_ECDH)
+    } else if (!strncmp(argv[argi], "ecdh_curve=", 11)) {
+	opts->ecdhCurve = strdup(argv[argi]+11);
+#endif
     } else {
     error:
 	message(LOG_ERR, "Invalid SSL Option: %s", argv[argi]);
