@@ -374,8 +374,10 @@ typedef struct {
     char *regexp[DEPTH_MAX];
     unsigned char lbmod;
     unsigned char lbparm;
+    char *dhparamFile;
 } SSLOpts;
 
+DH *dhParam = NULL;
 SSLOpts ServerOpts;
 SSLOpts ClientOpts;
 int PairIndex;
@@ -7494,6 +7496,25 @@ StoneSSL *mkStoneSSL(SSLOpts *opts, int isserver) {
 	SSL_CTX_set_session_cache_mode
 	    (ss->ctx, (SSL_SESS_CACHE_SERVER | SSL_SESS_CACHE_NO_AUTO_CLEAR));
     }
+    if (opts->dhparamFile) {
+	FILE *dhparam;
+	dhparam = fopen(opts->dhparamFile, "r");
+	if (dhparam == NULL) {
+	    message(LOG_ERR, "Failed to open DH parameter file");
+	    goto skip_dh;
+	}
+	dhParam = PEM_read_DHparams(dhparam, NULL, NULL, NULL);
+	fclose(dhparam);
+
+	if (!dhParam) {
+	    message(LOG_ERR, "Failed to read DH parameter");
+	    goto skip_dh;
+	}
+	SSL_CTX_set_tmp_dh(ss->ctx, dhParam);
+	SSL_CTX_set_options(ss->ctx,SSL_OP_SINGLE_DH_USE);
+	message(LOG_NOTICE, "Forward security (DH) enabled");
+    }
+ skip_dh:
     return ss;
  error:
     if (opts->verbose)
@@ -8906,6 +8927,7 @@ void sslopts_default(SSLOpts *opts, int isserver) {
     opts->lbmod = 0;
     opts->lbparm = 0xFF;
     opts->shutdown_mode = 0;
+    opts->dhparamFile = NULL;
 }
 
 int sslopts(int argc, int argi, char *argv[], SSLOpts *opts, int isserver) {
@@ -9053,6 +9075,8 @@ int sslopts(int argc, int argi, char *argv[], SSLOpts *opts, int isserver) {
 	       && argv[argi][3] == '=') {
 	opts->lbparm = argv[argi][2] - '0';
 	opts->lbmod = atoi(argv[argi]+4);
+    } else if (!strncmp(argv[argi], "dh_param=", 9)) {
+	opts->dhparamFile = strdup(argv[argi]+9);
     } else {
     error:
 	message(LOG_ERR, "Invalid SSL Option: %s", argv[argi]);
