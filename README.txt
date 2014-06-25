@@ -7,41 +7,41 @@
 			    sengoku@gcd.org
 
 
-  stone は、アプリケーションレベルの TCP & UDP リピーターです。ファイア
-ウォールの内から外へ、あるいは外から内へ、TCP あるいは UDP を中継します。
+  Stone is a TCP/IP repeater in the application layer.  It repeats TCP
+and UDP from inside to outside of a firewall, or from outside to inside.
 
-  stone には以下のような特徴があります。
+  Stone has following features:
 
-1. Win32 に対応している
-	以前は UNIX マシンで構成されることが多かったファイアウォールです
-	が、最近は WindowsNT が使われるケースが増えてきました。stone は 
-	WindowsNT あるいは Windows95 上で手軽に実行することができます。
-	もちろん、Linux, FreeBSD, BSD/OS, SunOS, Solaris, HP-UX などの 
-	UNIX マシンでも使うことができます。
+1.  Stone supports Win32.
+	Formerly, UNIX machines are used as firewalls, but recently
+	WindowsNT machines are used, too.  You can easily run stone on
+	WindowsNT and Windows95.  Of course, available on Linux,
+	FreeBSD, BSD/OS, SunOS, Solaris, HP-UX and so on.
 
-2. 単純
-	わずか 10000 行 (C 言語) ですので、セキュリティホールが生じる可能
-	性を最小限にできます。
+2.  Simple.
+	Stone's source code is only 10000 lines long (written in C
+	language), so you can minimize the risk of security
+	holes.
 
-3. SSL 対応
-	OpenSSL (http://www.openssl.org/) を使うことにより、暗号化/復号
-	して中継できます。また、クライアント認証およびサーバ認証をサポー
-	トしています。さらに、認証によって得られる証明書のサブジェクトの
-	一部を、中継先へ送ることもできます。
+3.  Stone supports SSL.
+	Using OpenSSL (http://www.openssl.org/), stone can
+	encrypt/decrypt.  Client verifications, and server verifications
+	are also supported.  Stone can send a substring of the subject
+	of the certificate to the destination.
 
-4. http proxy
-	簡易型 http proxy としても使うことができます。
+4.  Stone is a http proxy.
+	Stone can also be a tiny http proxy.
 
-5. POP -> APOP 変換
-	APOP に対応していないメーラと stone を使うことで、APOP サーバへ
-	アクセスできます。
+5.  POP -> APOP conversion.
+	With stone and a mailer that does not support APOP, you can
+	access to an APOP server.
 
-6. IPv6 対応
-	IP/IPv6 変換して中継することができます。IPv6 に対応していない
-	ソフトウェアを手軽に IPv6 化することが可能です。
+6.  Stone supports IPv6.
+	Stone can convert IP and IPv6 each other.  With stone, you can
+	use IP-only software on IPv6 network.
 
 
-使用方法
+HOWTO USE
 
 	stone [-C <file>] [-P <command>] [-Q <options>] [-N] [-d] [-p] [-n]
 	      [-u <max>] [-f <n>] [-l] [-L <file>] [-a <file>] [-i <file>]
@@ -56,139 +56,148 @@
 	      [-M install <name>] [-M remove <name>]
 	      <st> [-- <st>]...
 
-	-C はオプションおよび <st> をコマンドラインで指定するかわりに設
-	定ファイルから読み込みます。-P は設定ファイルを読み込む際のプリ
-	プロセッサを指定します。プリプロセッサへ与える引数は -Q で指定で
-	きます。-N を指定すると、コマンドラインおよび設定ファイルを読み
-	込んだ後、終了します。つまりポートを開くこと無く設定ファイルの
-	チェックを行なうことができます。
+	If the ``-C <file>'' flag is used, the program read these
+	options and ``<st>''s from the configuration file ``<file>''.
+	If the ``-P <command>'' flag is used, the program executes
+	pre-processor to read the configuration file.  ``-Q <options>''
+	can be used to pass options to the pre-processor.  If the ``-N''
+	flag is used, stone will terminate after parsing options without
+	opening the ports.
 
-	オプションとして -d を指定すると、デバッグレベルを増加させます。 
-	-p を指定すると中継したデータをダンプします。-n を指定すると、ホ
-	スト名やサービス名の代わりに IP アドレスやサービス番号を表示しま
-	す。
+	If the ``-d'' flag is used, then increase the debug level.  If
+	the ``-p'' flag is used, data repeated by stone are dumped.  If
+	the ``-n'' is used, IP addresses and service port numbers are
+	shown instead of host names and service names.
 
-	-u オプションは同時に記憶できる UDP の発信元の最大数を指定します。
-	デフォルトは 100 です。-f オプションは子プロセスの数を指定します。
-	デフォルトは子プロセス無しです。
+	If the ``-u <max>'' flag (``<max>'' is integer) is used, the
+	program memorize ``<max>'' UDP sources simultaneously.  The
+	default value is 100.  If the ``-f <n>'' flag (``<n>'' is
+	integer) is used, the program spawn ``<n>'' child processes.
+	The default behavior is not to spawn any child processes.
 
-	-l を指定すると、エラーメッセージ等を syslog へ出力します。-L を
-	指定すると、エラーメッセージ等を file へ出力します。-a を指定す
-	ると、アクセスログを file へ出力します。-i は stone のプロセス 
-	ID を出力するファイルを指定します。
+	If the ``-l'' flag is used, the program sends error messages to
+	the syslog instead of stderr.  If the ``-L <file>'' (``<file>''
+	is a file name) flag is used, the program writes error messages
+	to the file.  If the ``-a <file>'' flag is used, the program
+	writes accounting to the file.  If the ``-i <file>'' flag is
+	used, the program writes its process ID to the file.
 
-	-X は中継を行なう際のバッファの大きさを指定します。デフォルトは
-	1000 バイトです。-T を指定すると TCP セッションのタイムアウトの秒
-	数を変更できます。デフォルトは 600 (10 分) です。-A を指定すると
-	listen 呼び出しの未処理接続キューの最大長を変更できます。デフォル
-	トは 50 です。-r を指定すると <st> のソケットに SO_REUSEADDR を設
-	定します。
+	The ``-X <n>'' flag alters the buffer size of the repeater.  The
+	default value is 1000 bytes.  If the ``-T <n>'' is used, the
+	timeout of TCP sessions can be specified to ``<n>'' sec.
+	Default: 600.  The ``-A'' flag specifies the maximum length the
+	queue of pending connections may grow to.  Default: 50.  The
+	``-r'' flag is used, SO_REUSEADDR is set on the socket of <st> .
 
-	-x を指定すると http proxy の接続先を制限できます。接続先のポー
-	ト番号のリスト <port>[,<port>][-<port>]... および接続先ホストの
-	リスト <xhost>... を指定します。-x を複数指定すると、最後に指定
-	したものから順に、ポート番号のリストがマッチするものを検索します。
-	-x -- を指定すると、それ以前のものは検索対象となりません。
+	Using the ``-x <port>[,<port>][-<port>]... <xhost>... --'' flag,
+	the http proxy (described later) can only connect to
+	<xhost>:<port>.  If more than one ``-x ... --'' flags are
+	designated, the posterior one whose <port> list matches the
+	connecting port.  If the ``-x --'' is used, prior ``-x'' flags
+	are ignored.
 
-	-b は中継先 <master>:<port> に接続できないときのバックアップとし
-	て <backup>:<port> を指定します。すなわち <n> 秒ごとに 
-	<master>:<port> に対するヘルスチェック (後述する -s オプションで
-	設定) が成功するかチェックし、もしチェックに失敗した場合は、中継
-	先を <backup>:<port> へ変更します。<var> として「host」を指定す
-	ることにより、<master> とは異なるホストをチェックすることができ
-	ます。同様に、<var> として「port」を指定することにより、異なるポー
-	トをチェックすることができます。
+	The ``-b <n> <master>:<port> <backup>:<port>'' flag designates
+	the backup destination for <master>:<port>.  The program checks
+	every <n> seconds whether <master>:<port> is connectable, using
+	the health check script defined by ``-s'' flag described below.
+	If not, the backup is used instead.  Alternative <host> can be
+	checked, using ``host=<host>'' and alternative <port>, using
+	``port=<port>''.
 
-	-s はヘルスチェックのスクリプトを設定します。<send> を送信後、レ
-	スポンスが、正規表現 <expect> にマッチするか確認します。
+	The ``-s <send> <expect>... --'' flag defines the health check
+	script.  Sending <send>, then checks whether the response match
+	the regular expression <expect>.
 
-	-B は中継先グループの指定です。中継先が <host>:<port> である場合、
-	このグループの中からランダムに一つの中継先を選んで中継します。-b 
-	オプションで設定済みの中継先で、ヘルスチェックに失敗したものは、
-	選択枝から除外します。
+	The ``-B <host>:<port> <host1>:<port1>... --'' is for the
+	destination group.  If the destination of <st> is <host>:<port>,
+	the program chooses a destination randomly from the group.  The
+	destination <host>:<port> that is designated by ``-b'' flag and
+	turned out unhealthy, is excluded from the group.
 
-	-I は中継先へ接続する際に用いるインタフェースを指定します。
+	The ``-I <host>'' designates the interface used as the source
+	address of the connection to the desctination.
 
-	-o と -g はそれぞれユーザ ID とグループ ID を指定します。ID は数
-	字のみ指定可能です。-t を指定すると、dir へ chroot します。-D を
-	指定すると、stone をデーモンとして起動します。-c はコアダンプを
-	行なうディレクトリを指定します。
+	If the ``-o <n>'' or ``-g <n>'' flag is used, the program set
+	its uid or gid to ``<n>'' respectively.  If the ``-t <dir>''
+	flag (``<dir>'' is a directory) is used, the program change its
+	root to the directory.  If the ``-D'' flag is used, stone runs
+	as a daemon.  The ``-c <dir>'' flag designates the directory for
+	core dump.
 
-	-M は stone を NT サービスとして登録/削除するためのオプションで
-	す。サービス名 <name> を指定します。サービスとして登録した後、
-	net start <name> コマンドを実行してサービスを開始させてください。
-	例:
+	The ``-M install <name>'' and the ``-M remove <name>'' flags are
+	for NT service.  ``<name>'' is the service name.  Start the
+	service using the command: net start <name>.  To install stone
+	service as the name ``repeater'', for example:
+
 		C:\>stone -M install repeater -C C:\stone.cfg
 		C:\>net start repeater
 
-	-q および -z は、SSL 暗号化/復号 のオプションです。-q は、stone 
-	が SSL クライアントとして、他の SSL サーバへ接続するとき、すなわ
-	ち中継先が SSL サーバの時の、SSL オプションです。-z は stone が 
-	SSL サーバとして、他の SSL クライアントからの接続を受付ける時の、
-	SSL オプションです。
+	The ``-q <SSL>'' and the ``-z <SSL>'' flags are for SSL
+	encryption.  The ``-q <SSL>'' is for the client mode, that is,
+	when stone connects to the other SSL server as a SSL client.
+	The ``-z <SSL>'' if for the server mode, that is, when other SSL
+	clients connect to the stone.
 
-	<SSL> は SSL オプションで、次のいずれかです。
+	``<SSL>'' is one of the following.
 
-	default		SSL オプション指定をデフォルトに戻します。
-			複数の <st> を指定する際、<st> 毎に異なる SSL オ
-			プションを指定することができます。
-	verbose		デバッグ用文字列をログに出力します。
-	verify		SSL 接続相手に、SSL 証明書を要求します。
-	verify,once	セッション開始時に一度だけ、
-			SSL クライアントに証明書を要求します。(-z 専用)
-	verify,ifany	SSL クライアントから証明書が送られてきたときのみ
-			認証します。送られてこない場合は認証せずに
-			セッションを開始します。(-z 専用)
-	verify,none	SSL 接続相手に SSL 証明書を要求しません。
-	crl_check	CRL をチェックします。
-	crl_check_all	証明書チェーンの全てにおいて CRL をチェックします。
-	uniq		SSL 接続相手の SSL 証明書のシリアル番号が前回の
-			接続と異なる場合、接続を拒否します。
-	re<n>=<regex>	SSL 証明書のチェーンが満たすべき正規表現を指定します。
-			<n> は depth です。re0 が証明書のサブジェクト、
-			re1 がその発行者を意味します。
-			<n> は 9 まで指定できます。
-			<n> が負の値の場合は、re-1 が root CA で、
-			re-2 がその子 CA を意味します。
-	depth=<n>	SSL 証明書チェーンの長さの最大値を指定します。
-			チェーンの長さがこの値を越えると認証が失敗します。
-			<n> の最大値は 9 です。
-	tls1		プロトコルとして TLSv1 を用います。
-	ssl3		プロトコルとして SSLv3 を用います。
-	ssl2		プロトコルとして SSLv2 を用います。
-	no_tls1		プロトコルの選択枝から TLSv1 を外します。
-	no_ssl3		プロトコルの選択枝から SSLv3 を外します。
-	no_ssl2		プロトコルの選択枝から SSLv2 を外します。
-	sni		サーバ名通知 (Server Name Indication) を行ないます。
-	servername=<str>	SNI で通知するサーバ名を指定します。
-	bugs		SSL の実装にバグがある接続相手との接続を可能にします。
-	serverpref	SSL サーバの指定した暗号を用います (SSLv2 のみ)。
-	sid_ctx=<str>	SSL セッション ID コンテキストを設定します。
-	passfile=<file>	秘密鍵のパスフレーズを格納したファイルを指定します。
-	passfilepat=<file>	ファイル名のパターンを指定します。
-	key=<file>	証明書の秘密鍵ファイルを指定します。
-	keypat=<file>		ファイル名のパターンを指定します。
-	cert=<file>	証明書ファイルを指定します。
-	certpat=<file>		ファイル名のパターンを指定します。
-	certkey=<file>	秘密鍵付証明書ファイルを指定します。
-	certkeypat=<file>	ファイル名のパターンを指定します。
-	CAfile=<file>	認証局の証明書ファイルを指定します。
-	CApath=<dir>	認証局の証明書があるディレクトリを指定します。
-	pfx=<file>	PKCS#12 ファイルを指定します。
-	pfxpat=<file>		ファイル名のパターンを指定します。
-	store=<prop>	[Windows] 証明書ストア内の秘密鍵付証明書を指定。
-			"SUBJ:<substr>" あるいは "THUMB:<hex>"
-	storeCA		[Windows] 証明書ストア内の認証局証明書を使用します。
-	cipher=<list>	暗号化アルゴリズムのリストを指定します。
-	lb<n>=<m>	SSL 証明書の CN に応じて中継先を切り替えます。
-			SSL オプションの re<n>= で指定した正規表現中、
-			<n> 番目の ( ... ) 内の正規表現にマッチした文字
-			列から算出した数値の剰余 <m> に基づいて、-B オプ
-			ションで指定した中継先グループの中から中継先を選
-			びます。
+	default		reset SSL options to the default.
+			Using multiple <st>, different SSL options can
+			be designated for each <st>.
+	verbose		verbose mode.
+	verify		require SSL certificate to the peer.
+	verify,once	request a client certificate on the initial TLS/SSL
+			handshake. (-z only)
+	verify,ifany	The certificate returned (if any) is checked. (-z only)
+	verify,none	never request SSL certificate to the peer.
+	crl_check	lookup CRLs.
+	crl_check_all	lookup CRLs for whole chain.
+	uniq		if the serial number of peer's SSL certificate
+			is different from the previous session, deny it.
+	re<n>=<regex>	The certificate of the peer must satisfy the
+			<regex>.  <n> is the depth.  re0 means the subject
+			of the certificate, and re1 means the issure.
+			The maximum of <n> is 9.
+			if <n> is negative, re-1 means the root CA and
+			re-2 means its child CA.
+	depth=<n>	The maximum of the certificate chain.
+			If the peer's certificate exceeds <n>, the
+			verification fails.  The maximum of <n> is 9.
+	tls1		Just use TLSv1 protocol.
+	ssl3		Just use SSLv3 protocol.
+	ssl2		Just use SSLv2 protocol.
+	no_tls1		Turn off TLSv1 protocol.
+	no_ssl3		Turn off SSLv3 protocol.
+	no_ssl2		Turn off SSLv2 protocol.
+	sni		Server Name Indication (SNI).
+	servername=<str>	The name of the server indicated by SNI.
+	bugs		Switch on all SSL implementation bug workarounds.
+	serverpref	Use server's cipher preferences (only SSLv2).
+	sid_ctx=<str>	Set session ID context.
+	passfile=<file>	The filename of the file containing password of the key
+	passfilepat=<file>	The pattern of the filename
+	key=<file>	The filename of the secret key of the certificate.
+	keypat=<file>		The pattern of the filename
+	cert=<file>	The filename of the certificate.
+	certpat=<file>		The pattern of the filename
+	certkey=<file>	The filename of the certificate with the secret key.
+	certkeypat=<file>	The pattern of the filename
+	CAfile=<file>	The filename of the certificate of the CA.
+	CApath=<dir>	The directory of the certificate files.
+	pfx=<file>	The filename of the PKCS#12 bag.
+	pfxpat=<file>		The pattern of the filename
+	store=<prop>	[Windows] Use the secret key in the Cert Store.
+			designate by "SUBJ:<substr>" or "THUMB:<hex>"
+	storeCA		[Windows] Use CA certificates in the Cert Store.
+	cipher=<list>	The list of ciphers.
+	lb<n>=<m>	change the destination according to the
+			certificate of the peer.  The number calculated
+			from the matched string to the <n>th ( ... ) in
+			the ``regex'' of SSL options (mod <m>) is used
+			to select the destination from the destination
+			group defined by ``-B'' flag.
 
-	<st> は次のいずれかです。<st> は「--」で区切ることにより、複数個
-	指定できます。
+	``<st>'' is one of the following.  Multiple ``<st>'' can be
+	designated, separated by ``--''.
 
 	(1)	<host>:<port> <sport> [<xhost>...]
 	(2)	<host>:<port> <shost>:<sport> [<xhost>...]
@@ -197,199 +206,198 @@
 	(5)	<host>:<port>/proxy <sport> <header> [<xhost>...]
 	(6)	health <sport> [<xhost>...]
 
-	stone を実行しているマシンのポート <sport> への接続を、他のマシ
-	ン <host> のポート <port> へ中継します。インタフェースを複数持つ
-	マシンでは、(2) のようにインタフェースのアドレス <shost> を指定
-	することにより、特定のインタフェースへの接続のみを転送することが
-	できます。<host>:<port> の代わりに、「/」ないし「./」から始まる
-	パス名を指定することにより、UNIX ドメインソケットを扱うこともで
-	きます。
+	The program repeats the connection on port ``<sport>'' to the
+	other machine ``<host>'' port ``<port>''.  If the machine, on
+	which the program runs, has two or more interfaces, type (2) can
+	be used to repeat the connection on the specified interface
+	``<shost>''.  You can also specify path name that begins with
+	``/'' or ``./'', instead of ``<host>:<port>'' so that the
+	program handles a unix domain socket.
 
-	(3) は、http proxy です。WWW ブラウザの http proxy の設定で、
-	stone を実行しているマシンおよびポート <sport> を指定します。
-	「proxy」には、「/」に続けて以下の拡張子を付けることができます。
+	Type (3) is a http proxy.  Specify the machine, on which the
+	program runs, and port ``<sport>'' in the http proxy settings of
+	your WWW browser.
+	Extentions can be added to the ``proxy'' like ``<xhost>/<ext>''.
+	<ext> is:
 
-	v4only	proxy の接続先を IP アドレスに限定します。
+	v4only	limit the destination within IP addresses.
 
-	v6only	proxy の接続先を IPv6 アドレスに限定します。
+	v6only	limit the destination within IPv6 addresses.
 
-	(4) は、http リクエストにのせて中継します。<request> は HTTP 1.0 
-	で規定されるリクエストです。リクエスト文字列中、「\」はエスケー
-	プ文字であり、次のような置き換えが行なわれます。
+	Type (4) relays stream over http request.  ``<request>'' is the
+	request specified in HTTP 1.0.  In the ``<request>'', ``\'' is
+	the escape character, and the following substitution occurs.
 
-		\n	改行 (0x0A)
-		\r	復帰 (0x0D)
-		\t	タブ (0x09)
-		\\	\    (0x5C)
-		\a	接続元の IP アドレス
-		\A	「接続元の IP アドレス」:「ポート番号」
-		\d	接続先の IP アドレス
-		\D	「接続先の IP アドレス」:「ポート番号」(透過プロキシ用)
-		\u	接続元のユーザID (番号)
-		\U	接続元のユーザ名
-		\g	接続元のグループID (番号)
-		\G	接続元のグループ名
-			\u \U \g \G は UNIX ドメインソケットの場合のみ
-		\0	SSL 証明書のシリアル番号
-		\1 - \9	SSL オプションの re<n>= で指定した正規表現中、
-			( ... ) 内の正規表現にマッチした文字列
+		\n	newline  (0x0A)
+		\r	return   (0x0D)
+		\t	tab      (0x09)
+		\\	\ itself (0x5C)
+		\a	the IP address of the client connecting to the stone.
+		\A	<IP address of the client>:<port number>
+		\d	the destination IP address
+		\D	<dst IP address>:<port number> (for transparent proxy)
+		\u	uid (number) of the client
+		\U	user name of the client
+		\g	gid (number) of the client
+		\G	group name of the client
+			\u \U \g \G are valid in the case of unix domain socket
+		\0	the serial number of peer's SSL certificate.
+		\1 - \9	the matched string in the ``regex'' of SSL options.
 		\?1<then>\:<else>\/
-			もし \1 (\2 - \9 も同様) の文字列が、空文字列で
-			なければ <then>、空文字列であれば <else>
+			if \1 (\2 - \9 in a similar way) is not null,
+			<then>, otherwise <else>.
 
-	(5) は、http リクエストヘッダの先頭に <header> を追加して中継し
-	ます。(4) と同様のエスケープを使うことができます。「/proxy」の代
-	わりに「/mproxy」を指定すると、リクエストヘッダごとに <header> 
-	を追加します。
+	Type (5) repeats http request with ``<header>'' in the top of
+	request headers.  The above escapes can be also used.  If
+	``/mproxy'' is designated instead of ``/proxy'', ``<header>'' is
+	added to each request headers.
 
-	(6) は、stone が正常に動作しているか検査するためのポートの指定で
-	す。<sport> で指定したポートに接続して以下のコマンドを送信すると、
-	stone の状態が返されます。
+	Type (6) designates the port that other programs can check
+	whether the stone runs `healthy' or not.  Following commands are
+	available to check the stone.
 
-		HELO 任意の文字列	stone, pair, trash 等の個数
-		STAT			スレッドの個数, mutex コンフリクト回数
-		FREE			free リスト長
-		CLOCK			経過秒数
-		CVS_ID			CVS の ID
-		CONFIG			config ファイルの内容
-		STONE			各 stone の設定内容
-		LIMIT <var> <n>		変数 <var> の値が <n> 未満か調べる
+		HELO <any string>	returns the status of the stone
+		STAT			# of threads, mutex conflicts
+		FREE			length of free lists
+		CLOCK			seconds passed
+		CVS_ID			CVS ID
+		CONFIG			content of the configuration file
+		STONE			configuration of each stones
+		LIMIT <var> <n>		check the value of <var> is
+					less than <n>
+	``<var>'' is one of the following:
 
-	<var> は次のうちのいずれかです。
+		PAIR		the number of ``pair''
+		CONN		the number of ``conn''
+		ESTABLISHED	seconds passed since the last conn established
+		READWRITE	seconds passed since the last read/write
+		ASYNC		the number of threads
 
-		PAIR		pair の個数
-		CONN		conn の個数
-		ESTABLISHED	最後に接続確立してからの秒数
-		READWRITE	最後に read or write してからの秒数
-		ASYNC		スレッドの本数
+	The response of the stone is 2xx when normal, or 5xx when
+	abnormal on the top of line.
 
-	stone からの応答は、正常時は 200 番台、異常時は 500 番台の数値が
-	先頭につきます。
+	If the ``<xhost>'' are used, only machines or its IP addresses
+	listed in ``<xhost>'' separated by space character can
+	connect to the program and to be repeated.
 
-	<xhost> を列挙することにより、stone へ接続可能なマシンを制限する
-	ことができます。マシン名、あるいはその IP アドレスを空白で区切っ
-	て指定すると、そのマシンからの接続のみを中継します。
+	Extentions can be added to the ``<xhost>'' like
+	``<xhost>/<ex>,<ex>...''.  <ex> is:
 
-	<xhost> には、「/」に続けて以下の拡張子を付けることができます。
-	複数の拡張子を指定するときは「,」で区切ります。
+	<m>	You can designate the length of prefix bits of the
+		netmask, so that only machines on specified.  In the
+		case of class C network 192.168.1.0, for example, use
+		``192.168.1.0/24''.
 
-	<m>	ネットワーク・マスクのビット数を指定することにより、特定
-		のネットワークのマシンからの接続を許可することができます。
-		例えば、クラス C のネットワーク 192.168.1.0 の場合は、
-		「192.168.1.0/24」と指定します。
+	v4	<xhost> is resolved as the IP address.
 
-	v4	<xhost> を IP アドレスとして扱います。
+	v6	<xhost> is resolved as the IPv6 address.
 
-	v6	<xhost> を IPv6 アドレスとして扱います。
+	p<m>	the data repeated by the program are dumped, only if it
+		was connected by the machines specified by <xhost>.  <m>
+		is the dump mode, equivalent to the number of ``-p''
+		options.
 
-	p<m>	<xhost> からの接続のみ、中継したデータをダンプします。
-		<m> はダンプ方法の指定です。-p オプションの個数に相当し
-		ます。
+	Use ``!'' instead of ``<xhost>'', to deny machines by following
+	``<xhost>''.
 
-	<xhost> の代わりに「!」を指定すると、後続の <xhost> は接続を拒否
-	するマシンの指定になります。
+	Extentions can be added to the ``<port>'' like
+	``<port>/<ext>,<ext>...''.  <ext> is:
 
-	<port> には、「/」に続けて以下の拡張子を付けることができます。
-	複数の拡張子を指定するときは「,」で区切ります。
+	udp	repeats UDP instead of TCP.
 
-	udp	TCP を中継する代わりに、UDP を中継します。
+	ssl	forwards with encryption.
 
-	ssl	SSL で暗号化して中継します。
+	v6	connects to the destination using IPv6.
 
-	v6	中継先へ IPv6 接続します。
+	base	forwards with MIME base64 encoding.
 
-	base	MIME base64 で符号化して中継します。
+	Extentions can be added to the ``<sport>'' like
+	``<sport>/<ext>,<ext>...''.  <ext> is:
 
-	<sport> には、「/」に続けて以下の拡張子を付けることができます。
-	複数の拡張子を指定するときは「,」で区切ります。
+	udp	repeats UDP instead of TCP.
 
-	udp	TCP を中継する代わりに、UDP を中継します。
+	apop	converts POP to APOP.  The conversion is derived from
+		the RSA Data Security, Inc. MD5 Message-Digest Algorithm.
 
-	apop	POP を APOP へ変換して中継します。
-		変換には RSA Data Security 社の MD5 Message-Digest アル
-		ゴリズムを使用します。
+	ssl	forwards with decryption.
 
-	ssl	SSL を復号して中継します。
+	v6	accepts connection using IPv6.  If <shost> is omitted 
+		like (1), IP is also acceptable.
 
-	v6	IPv6 接続を受付けます。(1) のようにインタフェースの
-		アドレス <shost> を指定しない場合は、IP 接続も受付けるこ
-		とができます。
+	v6only	accepts connection using IPv6 only.  Even if <shost> is
+		omitted like (1), IP is not acceptable.
 
-	v6only	IPv6 接続のみを受付けます。(1) のようにインタフェースの
-		アドレス <shost> を指定しない場合も、IP 接続を受付けるこ
-		とはありません。
+	base	forwards with MIME base64 decoding.
 
-	base	MIME base64 を復号して中継します。
+	http	relays stream over http.
 
-	http	http リクエストヘッダを取り除いて中継します。
-
-	ident	接続を受付けるときに接続元に対し ident プロトコル 
-		(RFC1413) を使ってユーザ名を照会します。
+	ident	identifies the owner of the incoming connection
+		on the peer using ident protocol (RFC1413).
 
 
-例
-	outer: ファイアウォールの外側にあるマシン
-	inner: ファイアウォールの内側にあるマシン
-	fwall: ファイアウォール. このマシン上で stone を実行
+EXAMPLES
+	outer: a machine in the outside of the firewall
+	inner: a machine in the inside of the firewall
+	fwall: the firewall on which the stone is executed
 
 	stone outer:telnet 10023
-		outer へ telnet プロトコルを中継
-		inner で telnet fwall 10023 を実行
+		Repeats the telnet protocol to ``outer''.
+		Run ``telnet fwall 10023'' on ``inner''.
 
 	stone outer:domain/udp domain/udp
-		DNS 問い合わせを outer へ中継
-		inner で nslookup - fwall を実行
+		Repeats the DNS query to ``outer''.
+		Run ``nslookup - fwall'' on ``inner''.
 
 	stone outer:ntp/udp ntp/udp
-		outer へ NTP を中継
-		inner で ntpdate fwall を実行
+		Repeats the NTP to ``outer''.
+		Run ``ntpdate fwall'' on ``inner''.
 
 	stone localhost:http 443/ssl
-		WWW サーバを https 対応にする
-		WWW ブラウザで https://fwall/ をアクセス
+		Make WWW server that supports ``https''.
+		Access ``https://fwall/'' using a WWW browser.
 
 	stone localhost:telnet 10023/ssl
-		telnet を SSL 化
-		inner で SSLtelnet -z ssl fwall 10023 を実行
+		Make telnet server that supports SSL.
+		Run ``SSLtelnet -z ssl fwall 10023'' on ``inner''.
 
 	stone proxy 8080
-		http proxy
+		http proxy.
 
 	stone outer:110/apop 110
-		APOP に対応していないメーラで inner:pop へ接続
+		connect to inner:pop using a mailer that does not
+		support APOP.
 
-	fwall が http proxy (port 8080) である時:
+	Where fwall is a http proxy (port 8080):
 
 	stone fwall:8080/http 10023 'POST http://outer:8023 HTTP/1.0'
 	stone localhost:telnet 8023/http
-		inner と outer でそれぞれ stone を実行
-		http リクエストにのせて中継
+		Run stones on ``inner'' and ``outer'' respectively.
+		Relays stream over http.
 
 	stone fwall:8080/proxy 9080 'Proxy-Authorization: Basic c2VuZ29rdTpoaXJvYWtp'
-		proxy 認証に対応していないブラウザ用
+		for browser that does not support proxy authorization.
 
 
-ホームページ
+HOMEPAGE
 
-	stone の公式ホームページは次の URL です。
-	http://www.gcd.org/sengoku/stone/Welcome.ja.html
-
-
-著作権
-
-	この stone に関する全ての著作権は、原著作者である仙石浩明が所有
-	します。この stone は、GNU General Public License (GPL) に準ずる
-	フリーソフトウェアです。個人的に使用する場合は、改変・複製に制限
-	はありません。配布する場合は GPL に従って下さい。また、openssl 
-	とリンクして使用することを許可します。
+	The official homepage of stone is:
+	http://www.gcd.org/sengoku/stone/
 
 
-無保証
+COPYRIGHT
 
-	この stone は無保証です。この stone を使って生じたいかなる損害に
-	対しても、原著作者は責任を負いません。詳しくは GPL を参照して下
-	さい。
+	All rights about this program ``stone'' are reserved by the
+	original author, Hiroaki Sengoku.  The program is free software;
+	you can redistribute it and/or modify it under the terms of the
+	GNU General Public License (GPL).  Furthermore you can link it
+	with openssl.
 
 
-#2939								仙石 浩明
+NO WARRANTY
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY.
+
+
+#2939
 http://www.gcd.org/sengoku/		Hiroaki Sengoku <sengoku@gcd.org>
