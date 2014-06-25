@@ -607,6 +607,9 @@ time_t freeExBotClock = 0;
 Conn conns;
 Origin *OriginTop = NULL;
 int OriginMax = 100;
+/* UDP diversity hard limit per source. */
+#define UDP_DIVERSITY_MAX   10000
+uint16_t UDP_Diversity = 1;     /* UDP diversity */
 PktBuf *freePktBuf = NULL;
 int nFreePktBuf = 0;
 #ifdef USE_EPOLL
@@ -2636,13 +2639,23 @@ Origin *getOrigins(struct sockaddr *from, socklen_t fromlen, Stone *stone) {
 #ifdef USE_EPOLL
     struct epoll_event ev;
 #endif
+    uint16_t count = 0;
+    Origin *cluster_origins[UDP_DIVERSITY_MAX];
     for (origin=origins->next; origin != NULL && origin->from;
 	 origin=origin->next) {
 	if (InvalidSocket(origin->sd)) continue;
 	if (saComp(&origin->from->addr, from)) {
-	    origin->lock = 1;	/* lock origin */
-	    return origin;
+            cluster_origins[count] = origin;
+	    count++;
 	}
+    }
+    if (count >= UDP_Diversity) {
+        uint16_t index;
+        RAND_pseudo_bytes((unsigned char *)&index, sizeof(uint16_t));
+        index = 1. * UDP_Diversity * index / UINT16_MAX;
+        origin = cluster_origins[index];
+        origin->lock = 1;	/* lock origin */
+        return origin;
     }
     /* can't find origin, so create */
     sd = socket(from->sa_family, SOCK_DGRAM, IPPROTO_UDP);
@@ -2807,6 +2820,12 @@ int sendUDP(PktBuf *pb) {
 #ifdef MSG_DONTWAIT
 	if (!(stone->proto & proto_block_d)) flags = MSG_DONTWAIT;
 #endif
+        uint16_t index;
+        RAND_pseudo_bytes((unsigned char *)&index, sizeof(uint16_t));
+        index = 1. * UDP_Diversity * index / UINT16_MAX;
+        SockAddr *dest = saDup(sa, salen);
+        sa = &(dest->addr);
+        saPort(sa, getport(sa) + index);
     } else {
 	sd = stone->sd;
 	sa = &origin->from->addr;
@@ -2923,7 +2942,7 @@ int scanUDP(
 	    goto next;
 	}
 #endif
-	if (++n >= OriginMax || now - origin->clock > CONN_TIMEOUT)
+	if (++n >= OriginMax * UDP_Diversity || now - origin->clock > CONN_TIMEOUT)
 	    docloseUDP(origin);
       next:
 	;
@@ -9186,6 +9205,7 @@ int sslthread_initialize(void) {
 #endif
 
 int dohyphen(char opt, int argc, char *argv[], int argi) {
+    char *p;
     switch(opt) {
     case 'd':
 	Debug++;
@@ -9263,10 +9283,17 @@ int dohyphen(char opt, int argc, char *argv[], int argi) {
 	break;
     case 'u':
 	if (++argi >= argc) {
-	    message(LOG_ERR, "option -%c requires # of <max> UDP sessions",
+	    message(LOG_ERR, "option -%c requires # of <max> UDP sessions and/or <:diversity> (UDP diversity). #",
 		    opt);
 	    exit(1);
 	}
+        p = argv[argi];
+        while (*p) {
+            if (*p == ':') {
+                UDP_Diversity = atoi(p + 1);
+                *p = '\0';
+            } else p++;
+        }
 	OriginMax = atoi(argv[argi]);
 	break;
     case 'X':

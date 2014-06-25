@@ -69,11 +69,24 @@ HOWTO USE
 	the ``-n'' is used, IP addresses and service port numbers are
 	shown instead of host names and service names.
 
-	If the ``-u <max>'' flag (``<max>'' is integer) is used, the
-	program memorize ``<max>'' UDP sources simultaneously.  The
-	default value is 100.  If the ``-f <n>'' flag (``<n>'' is
-	integer) is used, the program spawn ``<n>'' child processes.
-	The default behavior is not to spawn any child processes.
+        If the ``-u <max>[:diversity] | [max]<:diversity>'' flag (Both
+        ``<max>'' and <diversity> are integers) is used, the program
+        memorize ``<max>'' UDP sources simultaneously.  The default
+        value is 100.  ``diversity'' is the maximum number of diverse
+        sockets per UDP source.  The default diverse value is 1. **About
+        UDP diversity:** The UDP diversity is similar to MIMO diversity
+        in wireless communication. It's purpose is to allow UDP packets
+        tranversing some powerful DPI firewalls hopefully. UDP repeater
+        will randomly choose outbound socket (up to ``diversity''
+        choices per source) for each packet. The destination port is
+        randomly chose from a range of [port, port + diversity - 1].
+        There should be some NAT tricks on remote host to converge all
+        packets to the real receiver and vice versa. *DO AVOID ABUSE
+        DIVERSITY FEATURE*
+        
+        If the ``-f <n>'' flag (``<n>'' is integer) is used, the program
+        spawn ``<n>'' child processes.  The default behavior is not to
+        spawn any child processes.
 
 	If the ``-l'' flag is used, the program sends error messages to
 	the syslog instead of stderr.  If the ``-L <file>'' (``<file>''
