@@ -19,7 +19,7 @@
 # -DWINDOWS	Windows95/98/NT
 # -DNT_SERVICE	WindowsNT/2000 native service
 
-#CFLAGS=		# -g
+CFLAGS=		-D_GNU_SOURCE # -g
 
 SSL=		/usr/local/ssl
 SSL_FLAGS=	-DUSE_SSL
@@ -97,7 +97,7 @@ svc_stone: logmsg.rc $(SVC_LIBS)
 	$(MAKE) FLAGS="-DNT_SERVICE $(FLAGS)" LIBS="$(LIBS) $(SVC_LIBS) -ladvapi32 -luser32 -lshell32 -lkernel32" $(TARGET)
 
 linux:
-	$(MAKE) FLAGS="-O -Wall -DCPP='\"/usr/bin/cpp -traditional\"' -DPTHREAD -DUNIX_DAEMON -DPRCTL -DSO_ORIGINAL_DST=80 -DUSE_EPOLL -D_GNU_SOURCE $(FLAGS)" LIBS="-lpthread $(LIBS)" stone
+	$(MAKE) FLAGS="-O -Wall -DCPP='\"/usr/bin/cpp -traditional\"' -DPTHREAD -DUNIX_DAEMON -DPRCTL -DSO_ORIGINAL_DST=80 -DUSE_EPOLL $(FLAGS)" LIBS="-lpthread $(LIBS)" stone
 
 linux-pop:
 	$(MAKE) TARGET=linux pop_stone
@@ -201,7 +201,7 @@ mingw-pop:
 	$(MAKE) CC="$(MINGWCC)" TARGET=mingw pop_stone
 
 mingw-ssl: cryptoapi.o
-	$(MAKE) CC="$(MINGWCC)" FLAGS="$(FLAGS)" SSL_FLAGS="-DUSE_SSL -DCRYPTOAPI" SSL_LIBS="cryptoapi.o -lcrypt32 -lssl32 -leay32" TARGET=mingw ssl_stone
+	$(MAKE) CC="$(MINGWCC)" FLAGS="$(FLAGS)" SSL_FLAGS="-DUSE_SSL -DCRYPTOAPI" SSL_LIBS="cryptoapi.o -lssl -lcrypt32 -lssl32 -leay32" TARGET=mingw ssl_stone
 
 mingw-me:
 	$(MAKE) CC="$(MINGWCC)" FLAGS="-DNO_ADDRINFO" mingw-ssl

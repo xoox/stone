@@ -1,6 +1,6 @@
 Summary: Simple Repeater
 Name: stone
-Version: 2.3d-2.3.2.7
+Version: 2.1x
 Release: 1
 URL: http://www.gcd.org/sengoku/stone/
 Source0: %{name}-%{version}.tar.gz
