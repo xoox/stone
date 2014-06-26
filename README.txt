@@ -70,7 +70,7 @@ HOWTO USE
 	shown instead of host names and service names.
 
         If the ``-u <max>[:diversity] | [max]<:diversity>'' flag (Both
-        ``<max>'' and <diversity> are integers) is used, the program
+        ``<max>'' and ``<diversity>'' are integers) is used, the program
         memorize ``<max>'' UDP sources simultaneously.  The default
         value is 100.  ``diversity'' is the maximum number of diverse
         sockets per UDP source.  The default diverse value is 1. **About
@@ -81,8 +81,7 @@ HOWTO USE
         choices per source) for each packet. The destination port is
         randomly chose from a range of [port, port + diversity - 1].
         There should be some NAT tricks on remote host to converge all
-        packets to the real receiver and vice versa. *DO AVOID ABUSE
-        DIVERSITY FEATURE*
+        packets to the real receiver and vice versa. *DO AVOID ABUSE*
         
         If the ``-f <n>'' flag (``<n>'' is integer) is used, the program
         spawn ``<n>'' child processes.  The default behavior is not to

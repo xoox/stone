@@ -2649,9 +2649,15 @@ Origin *getOrigins(struct sockaddr *from, socklen_t fromlen, Stone *stone) {
 	    count++;
 	}
     }
+    uint16_t index;
+    RAND_pseudo_bytes((unsigned char *)&index, sizeof(uint16_t));
     if (count >= UDP_Diversity) {
-        uint16_t index;
-        RAND_pseudo_bytes((unsigned char *)&index, sizeof(uint16_t));
+        index = 1. * UDP_Diversity * index / UINT16_MAX;
+        origin = cluster_origins[index];
+        origin->lock = 1;	/* lock origin */
+        return origin;
+    } else if (count &&
+               index & (0x8000 >> (count % 16))) { /* half chance to reuse */
         index = 1. * UDP_Diversity * index / UINT16_MAX;
         origin = cluster_origins[index];
         origin->lock = 1;	/* lock origin */
@@ -4705,7 +4711,6 @@ int scanClose(Pair *pairs) {	/* scan close request */
     }
     p1 = trash.next;
     while (p1 != NULL) {
-	SOCKET sd;
 	p2 = p1;
 	p1 = p1->next;
 #ifndef USE_EPOLL
@@ -4716,7 +4721,6 @@ int scanClose(Pair *pairs) {	/* scan close request */
 	    n++;
 	    continue;
 	}
-	sd = p2->sd;
 	if (p2->proto & (proto_select_r | proto_select_w)) {
 	    p2->proto &= ~(proto_select_r | proto_select_w);
 	    p2->proto |= proto_dirty;
