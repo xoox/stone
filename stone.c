@@ -2658,7 +2658,7 @@ Origin *getOrigins(struct sockaddr *from, socklen_t fromlen, Stone *stone) {
         return origin;
     } else if (count &&
                index & (0x8000 >> (count % 16))) { /* half chance to reuse */
-        index = 1. * UDP_Diversity * index / UINT16_MAX;
+        index = 1. * count * index / UINT16_MAX;
         origin = cluster_origins[index];
         origin->lock = 1;	/* lock origin */
         return origin;
