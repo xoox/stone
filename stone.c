@@ -608,8 +608,9 @@ Conn conns;
 Origin *OriginTop = NULL;
 int OriginMax = 100;
 /* UDP diversity hard limit per source. */
-#define UDP_DIVERSITY_MAX   10000
-uint16_t UDP_Diversity = 1;     /* UDP diversity */
+#define UDP_DIVERSITY_MAX   100
+uint16_t UDP_Diversity_d = 1;     /* UDP destination diversity */
+uint16_t UDP_Diversity_s = 1;     /* UDP source diversity */
 PktBuf *freePktBuf = NULL;
 int nFreePktBuf = 0;
 #ifdef USE_EPOLL
@@ -2651,8 +2652,8 @@ Origin *getOrigins(struct sockaddr *from, socklen_t fromlen, Stone *stone) {
     }
     uint16_t index;
     RAND_pseudo_bytes((unsigned char *)&index, sizeof(uint16_t));
-    if (count >= UDP_Diversity) {
-        index = 1. * UDP_Diversity * index / UINT16_MAX;
+    if (count >= UDP_Diversity_s) {
+        index = 1. * UDP_Diversity_s * index / UINT16_MAX;
         origin = cluster_origins[index];
         origin->lock = 1;	/* lock origin */
         return origin;
@@ -2828,7 +2829,7 @@ int sendUDP(PktBuf *pb) {
 #endif
         uint16_t index;
         RAND_pseudo_bytes((unsigned char *)&index, sizeof(uint16_t));
-        index = 1. * UDP_Diversity * index / UINT16_MAX;
+        index = 1. * UDP_Diversity_d * index / UINT16_MAX;
         SockAddr *dest = saDup(sa, salen);
         sa = &(dest->addr);
         saPort(sa, getport(sa) + index);
@@ -2948,7 +2949,7 @@ int scanUDP(
 	    goto next;
 	}
 #endif
-	if (++n >= OriginMax * UDP_Diversity || now - origin->clock > CONN_TIMEOUT)
+	if (++n >= OriginMax * UDP_Diversity_s || now - origin->clock > CONN_TIMEOUT)
 	    docloseUDP(origin);
       next:
 	;
@@ -9210,6 +9211,7 @@ int sslthread_initialize(void) {
 
 int dohyphen(char opt, int argc, char *argv[], int argi) {
     char *p;
+    char *q;
     switch(opt) {
     case 'd':
 	Debug++;
@@ -9287,14 +9289,21 @@ int dohyphen(char opt, int argc, char *argv[], int argi) {
 	break;
     case 'u':
 	if (++argi >= argc) {
-	    message(LOG_ERR, "option -%c requires # of <max> UDP sessions and/or <:diversity> (UDP diversity). #",
+	    message(LOG_ERR, "option -%c requires # of <max> UDP sessions and/or <:diversity_d:diversity_s> (UDP diversity). #",
 		    opt);
 	    exit(1);
 	}
         p = argv[argi];
         while (*p) {
             if (*p == ':') {
-                UDP_Diversity = atoi(p + 1);
+                q = p + 2;
+                while (*q) {
+                    if (*q == ':') {
+                        UDP_Diversity_s = atoi(q + 1);
+                        *q = '\0';
+                    } else q++;
+                }
+                UDP_Diversity_d = atoi(p + 1);
                 *p = '\0';
             } else p++;
         }

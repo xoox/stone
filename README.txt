@@ -69,19 +69,21 @@ HOWTO USE
 	the ``-n'' is used, IP addresses and service port numbers are
 	shown instead of host names and service names.
 
-        If the ``-u <max>[:diversity] | [max]<:diversity>'' flag (Both
-        ``<max>'' and ``<diversity>'' are integers) is used, the program
-        memorize ``<max>'' UDP sources simultaneously.  The default
-        value is 100.  ``diversity'' is the maximum number of diverse
-        sockets per UDP source.  The default diverse value is 1. **About
-        UDP diversity:** The UDP diversity is similar to MIMO diversity
-        in wireless communication. It's purpose is to allow UDP packets
+        If the ``-u <max>[:div_d:div_s] | [max]<:div_d:div_s>'' flag
+        (Both ``<max>'', ``<div_d>'' and ``<div_s>'' are integers) is
+        used, the program memorize ``<max>'' UDP sources simultaneously.
+        The default value is 100.  ``div_d'' and ``div_s'' are the
+        maximum number of diverse sockets per UDP source. The suffix
+        ``_d'' is for destination, ``_s'' for source diversity
+        respectively. The default diverse value is 1. **About UDP
+        diversity:** The UDP diversity is similar to MIMO diversity in
+        wireless communication. It's purpose is to allow UDP packets
         tranversing some powerful DPI firewalls hopefully. UDP repeater
-        will randomly choose outbound socket (up to ``diversity''
-        choices per source) for each packet. The destination port is
-        randomly chose from a range of [port, port + diversity - 1].
-        There should be some NAT tricks on remote host to converge all
-        packets to the real receiver and vice versa. *DO AVOID ABUSE*
+        will randomly choose outbound socket (up to ``div_s'' choices
+        per source) for each packet. The destination port is randomly
+        chose from a range of [port, port + div_d - 1].  There should be
+        some NAT tricks on remote host to converge all packets to the
+        real receiver and vice versa. *DO AVOID ABUSE*
         
         If the ``-f <n>'' flag (``<n>'' is integer) is used, the program
         spawn ``<n>'' child processes.  The default behavior is not to
