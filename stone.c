@@ -660,6 +660,8 @@ const int proto_ohttp_s =	 0x4000000;	/* over http source */
 const int proto_ohttp_d =	 0x8000000;	/*           destination */
 const int proto_base_s =	0x10000000;	/* base64 source */
 const int proto_base_d =	0x20000000;	/*        destination */
+const int proto_obf_s =	        0x40000000;	  /* source obfuscation */
+const int proto_obf_d =	        0x80000000;	  /* destination obfuscation */
 #define command_ihead		    0x0100	/* insert header */
 #define command_iheads		    0x0200	/* insert header repeatedly */
 #define command_pop		    0x0300	/* POP -> APOP conversion */
@@ -671,6 +673,7 @@ const int proto_base_d =	0x20000000;	/*        destination */
 #define proto_ssl	(proto_ssl_s|proto_ssl_d)
 #define proto_v6	(proto_v6_s|proto_v6_d)
 #define proto_udp	(proto_udp_s|proto_udp_d)
+#define proto_obf	(proto_obf_s|proto_obf_d)
 #define proto_ip_only	(proto_ip_only_s|proto_ip_only_d)
 #define proto_unix	(proto_unix_s|proto_unix_d)
 #define proto_block	(proto_block_s|proto_block_d)
@@ -678,10 +681,12 @@ const int proto_base_d =	0x20000000;	/*        destination */
 #define proto_base	(proto_base_s|proto_base_d)
 #define proto_stone_s	(proto_udp_s|proto_command|\
 			 proto_ohttp_s|proto_base_s|\
+                         proto_obf_s|\
 			 proto_v6_s|proto_ip_only_s|\
 			 proto_ssl_s|proto_ident)
 #define proto_stone_d	(proto_udp_d|proto_command|\
 			 proto_ohttp_d|proto_base_d|\
+                         proto_obf_d|\
 			 proto_v6_d|proto_ip_only_d|\
 			 proto_ssl_d|proto_nobackup)
 #define proto_pair_s	(proto_ohttp_s|proto_base_s)
@@ -1116,6 +1121,12 @@ char *ext2str(int ext, char *str, int len) {
 	if (i < len) str[i++] = sep;
 	sep = ',';
 	strncpy(str+i, "udp", len-i);
+	i += 3;
+    }
+    if (ext & proto_obf) {
+	if (i < len) str[i++] = sep;
+	sep = ',';
+	strncpy(str+i, "obf", len-i);
 	i += 3;
     }
     if (ext & proto_ohttp) {
@@ -2727,6 +2738,29 @@ Origin *getOrigins(struct sockaddr *from, socklen_t fromlen, Stone *stone) {
     return origin;
 }
 
+void obfPkt(PktBuf *pb) {
+    uint16_t header = *(uint16_t *)pb->buf; /* Possible 16 extra bytes*/
+    int extra = 0;
+    int i;
+    for (i = 0; i < 9; i++) { /* Max 9 extra bytes */
+        if (header & 0x8000) extra++;
+        header <<= 1;
+    }
+    RAND_pseudo_bytes((unsigned char *)pb->buf + pb->len, extra);
+    pb->len += extra;
+}
+
+void deObfPkt(PktBuf *pb) {
+    uint16_t header = *(uint16_t *)pb->buf;
+    int extra = 0;
+    int i;
+    for (i = 0; i < 9; i++) {
+        if (header & 0x8000) extra++;
+        header <<= 1;
+    }
+    pb->len -= extra;
+}
+
 PktBuf *recvUDP(Stone *stone) {
     struct sockaddr_storage ss;
     struct sockaddr *from = (struct sockaddr*)&ss;
@@ -2773,6 +2807,10 @@ PktBuf *recvUDP(Stone *stone) {
 	    ungetPktBuf(pb);
 	    return NULL;
 	}
+    }
+    if ((pb->type == type_origin && stone->proto & proto_obf_d) ||
+            (pb->type == type_stone && stone->proto & proto_obf_s)) {
+        deObfPkt(pb);
     }
     if (pb->type == type_stone) {	/* outward */
 	XHosts *xhost = checkXhost(stone->xhosts, from, fromlen);
@@ -2841,6 +2879,10 @@ int sendUDP(PktBuf *pb) {
 #ifdef MSG_DONTWAIT
 	if (!(stone->proto & proto_block_s)) flags = MSG_DONTWAIT;
 #endif
+    }
+    if ((pb->type == type_stone && stone->proto & proto_obf_d) ||
+            (pb->type == type_origin && stone->proto & proto_obf_s)) {
+        obfPkt(pb);
     }
     if (sendto(sd, pb->buf, pb->len, flags, sa, salen) != pb->len) {
 	char addrport[STRMAX+1];
@@ -8499,7 +8541,7 @@ void help(char *com, char *sub) {
 		"       <host>:<port#>/proxy <sport> <header> [<xhost>...]\n"
 		"       <host>:<port#>/mproxy <sport> <header> [<xhost>...]\n"
 		"port:  <port#>[/<ext>[,<ext>]...]\n"
-		"ext:   tcp | udp"
+		"ext:   tcp | udp | obf"
 #ifdef USE_SSL
 		" | ssl"
 #endif
@@ -8511,7 +8553,7 @@ void help(char *com, char *sub) {
 #endif
 		" | base | block | nobackup\n"
 		"sport: [<host>:]<port#>[/<exts>[,<exts>]...]\n"
-		"exts:  tcp | udp"
+		"exts:  tcp | udp | obf"
 #ifdef USE_SSL
 		" | ssl"
 #endif
@@ -8845,6 +8887,9 @@ int getdist(	/* return pos where serv begins */
 	    } else if (!strncmp(p, "udp", 3)) {
 		p += 3;
 		*protop |= proto_udp;
+	    } else if (!strncmp(p, "obf", 3)) {
+		p += 3;
+		*protop |= proto_obf;
 	    } else if (!strncmp(p, "http", 4)) {
 		p += 4;
 		*protop |= proto_ohttp;
@@ -9749,6 +9794,7 @@ void doargs(int argc, int i, char *argv[]) {
 	for (; i < argc; i++, j++) if (!strcmp(argv[i], "--")) break;
 	if ((sproto & proto_udp)) {
 	    proto |= proto_udp_s;
+            if (sproto & proto_obf) proto |= proto_obf_s;
 	    if (sproto & proto_v6) proto |= proto_v6_s;
 	    if (sproto & proto_ip_only) proto |= proto_ip_only_s;
 	} else {
@@ -9763,6 +9809,7 @@ void doargs(int argc, int i, char *argv[]) {
 	}
 	if ((dproto & proto_udp)) {
 	    proto |= proto_udp_d;
+            if (dproto & proto_obf) proto |= proto_obf_d;
 	    if (dproto & proto_v6) proto |= proto_v6_d;
 	    if (dproto & proto_ip_only) proto |= proto_ip_only_d;
 	} else {

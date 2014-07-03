@@ -319,6 +319,10 @@ HOWTO USE
 
 	udp	repeats UDP instead of TCP.
 
+	obf	obfuscating UDP packets with variable size extra random
+                bytes. *No encryption applied. It's the peers' choice.
+                Or DTLS support should be added to stone.*
+
 	ssl	forwards with encryption.
 
 	v6	connects to the destination using IPv6.
@@ -329,6 +333,10 @@ HOWTO USE
 	``<sport>/<ext>,<ext>...''.  <ext> is:
 
 	udp	repeats UDP instead of TCP.
+
+	obf	obfuscating UDP packets with variable size extra random
+                bytes. *No encryption applied. It's the peers' choice.
+                Or DTLS support should be added to stone.*
 
 	apop	converts POP to APOP.  The conversion is derived from
 		the RSA Data Security, Inc. MD5 Message-Digest Algorithm.
