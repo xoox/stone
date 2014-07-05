@@ -289,7 +289,7 @@ int FdSetBug = 0;
 #define BUFMAX		2048
 #define LONGSTRMAX	1024
 #define STRMAX		127	/* > 38 */
-#define CONN_TIMEOUT	60	/* 1 min */
+#define CONN_TIMEOUT	120	/* 2 min */
 #define	LB_MAX		100
 #define	FREE_TIMEOUT	600	/* 10 min */
 
@@ -2664,13 +2664,13 @@ Origin *getOrigins(struct sockaddr *from, socklen_t fromlen, Stone *stone) {
     uint16_t index;
     RAND_pseudo_bytes((unsigned char *)&index, sizeof(uint16_t));
     if (count >= UDP_Diversity_s) {
-        index = 1. * UDP_Diversity_s * index / UINT16_MAX;
+        index = UDP_Diversity_s * index / (UINT16_MAX + .000001);
         origin = cluster_origins[index];
         origin->lock = 1;	/* lock origin */
         return origin;
     } else if (count &&
                index & (0x8000 >> (count % 16))) { /* half chance to reuse */
-        index = 1. * count * index / UINT16_MAX;
+        index = count * index / (UINT16_MAX + .000001);
         origin = cluster_origins[index];
         origin->lock = 1;	/* lock origin */
         return origin;
@@ -2827,8 +2827,8 @@ PktBuf *recvUDP(Stone *stone) {
 	origin = getOrigins(from, fromlen, stone);
 	if (!origin) goto end;
 	origin->xhost = xhost;
-	time(&origin->clock);
     }
+    time(&origin->clock);
     pb->origin = origin;
     if (pb->len > pb->bufmax || Debug > 4) {
 	char addrport[STRMAX+1];
@@ -2867,7 +2867,7 @@ int sendUDP(PktBuf *pb) {
 #endif
         uint16_t index;
         RAND_pseudo_bytes((unsigned char *)&index, sizeof(uint16_t));
-        index = 1. * UDP_Diversity_d * index / UINT16_MAX;
+        index = UDP_Diversity_d * index / (UINT16_MAX + .000001);
         SockAddr *dest = saDup(sa, salen);
         sa = &(dest->addr);
         saPort(sa, getport(sa) + index);
